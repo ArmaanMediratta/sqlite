@@ -11,8 +11,10 @@ typedef enum
 {
   PAGER_OK,
   PAGER_ERR_IO,
-  PAGER_ERR_NOMEM,
-  PAGER_ERR_CORRUPT
+  PAGER_ERR_NO_MEM,
+  PAGER_ERR_CORRUPT,
+  PAGER_ERR_BAD_PAGER,
+  PAGER_ERR_INVALID_PAGE
 } PagerStatus;
 
 typedef struct
@@ -25,9 +27,10 @@ typedef struct
 
 typedef struct
 {
-  int fd;                 //.db file desc
-  uint32_t num_pages;     // num of pages on .db file
-  Page cache[CACHE_SIZE]; // cache arr (2nd change algo)
+  int fd;                  //.db file desc
+  uint32_t num_pages;      // num of pages on .db file
+  Page* cache[CACHE_SIZE]; // cache arr (2nd change algo)
+  uint16_t num_cached;
   uint32_t clock_hand;
 } Pager;
 
