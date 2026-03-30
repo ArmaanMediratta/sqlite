@@ -1,5 +1,5 @@
 ---
-Language: C
+Language: Cpp
 BasedOnStyle: LLVM
 IndentWidth: 2
 ColumnLimit: 80

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.25)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 project(sqlite VERSION 1.0 LANGUAGES C)
 
