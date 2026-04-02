@@ -15,6 +15,10 @@ add_executable(sqlite_toy sqlite.c)
 target_link_libraries(sqlite_toy internals)
 target_compile_options(sqlite_toy PRIVATE ${COMPILE_OPTS})
 
-add_executable(tests tests/pager_test.c)
-target_link_libraries(tests internals)
-target_compile_options(tests PRIVATE ${COMPILE_OPTS})
+add_executable(pager_tests tests/pager_test.c)
+target_link_libraries(pager_tests internals)
+target_compile_options(pager_tests PRIVATE ${COMPILE_OPTS})
+
+enable_testing()
+
+add_test(NAME pager COMMAND pager_tests)
