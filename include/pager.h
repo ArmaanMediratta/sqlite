@@ -23,6 +23,7 @@ typedef struct
   void* data;
   bool ref;
   bool dirty;
+  bool was_dirty;
 } Page;
 
 typedef struct
@@ -40,5 +41,6 @@ PagerStatus p_close(Pager* p);
 PagerStatus p_alloc_page(Pager* p, uint32_t* page_no);
 PagerStatus p_read_page(Pager* p, uint32_t page_no, void** page_data);
 PagerStatus p_write_page(Pager* p, uint32_t page_no, void* page_data);
+PagerStatus p_commit(Pager* p);
 
 #endif
