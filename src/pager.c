@@ -22,9 +22,7 @@ static PagerStatus create_page(Page** page, uint32_t page_no)
 {
   Page* pg = calloc(1, sizeof(Page));
   if (pg == NULL)
-  {
     return PAGER_ERR_NO_MEM;
-  }
 
   pg->data = calloc(1, PAGE_SIZE);
   if (pg->data == NULL)
@@ -60,9 +58,8 @@ static uint32_t find_victim(Pager* p)
       else
       {
         if (pg->was_dirty && flush(p, pg) != PAGE_SIZE)
-        {
           return UINT32_MAX;
-        }
+
         return (p->clock_hand++) % CACHE_SIZE;
       }
     }
@@ -76,9 +73,7 @@ static Page* cache_lookup(Pager* p, uint32_t page_no)
   for (int i = 0; i < p->num_cached; ++i)
   {
     if (p->cache[i]->page_no == page_no)
-    {
       return p->cache[i];
-    }
   }
   return NULL;
 }
@@ -88,9 +83,7 @@ static PagerStatus cache_load(Pager* p, Page** page, uint32_t page_no)
   Page* pg;
   PagerStatus s = create_page(&pg, page_no);
   if (s != PAGER_OK)
-  {
     return s;
-  }
 
   if (load(p, pg) != PAGE_SIZE)
   {
@@ -116,9 +109,7 @@ PagerStatus p_open(const char* filename, Pager** out)
 {
   Pager* p = calloc(1, sizeof(Pager));
   if (p == NULL)
-  {
     return PAGER_ERR_NO_MEM;
-  }
 
   int fd = open(filename, O_RDWR | O_CREAT, 0644);
   if (fd == -1)
@@ -144,13 +135,9 @@ PagerStatus p_open(const char* filename, Pager** out)
   }
 
   if (st.st_size != 0)
-  {
     p->num_pages = (st.st_size / PAGE_SIZE);
-  }
   else
-  {
     p->num_pages = 0;
-  }
 
   *out = p;
 
@@ -160,9 +147,7 @@ PagerStatus p_open(const char* filename, Pager** out)
 PagerStatus p_close(Pager* p)
 {
   if (close(p->fd) == -1)
-  {
     return PAGER_ERR_IO;
-  }
 
   for (int i = 0; i < p->num_cached; ++i)
   {
@@ -177,16 +162,12 @@ PagerStatus p_close(Pager* p)
 PagerStatus p_alloc_page(Pager* p, uint32_t* page_no)
 {
   if (p == NULL)
-  {
     return PAGER_ERR_BAD_PAGER;
-  }
 
   Page* pg;
   PagerStatus s = create_page(&pg, p->num_pages);
   if (s != PAGER_OK)
-  {
     return s;
-  }
 
   uint32_t cache_index = find_victim(p);
   if (cache_index == UINT32_MAX)
@@ -205,23 +186,17 @@ PagerStatus p_alloc_page(Pager* p, uint32_t* page_no)
 PagerStatus p_read_page(Pager* p, uint32_t page_no, void** page_data)
 {
   if (p == NULL)
-  {
     return PAGER_ERR_BAD_PAGER;
-  }
 
   if (page_no >= p->num_pages)
-  {
     return PAGER_ERR_INVALID_PAGE;
-  }
 
   Page* pg = cache_lookup(p, page_no);
   if (pg == NULL)
   {
     PagerStatus s = cache_load(p, &pg, page_no);
     if (s != PAGER_OK)
-    {
       return s;
-    }
   }
 
   pg->ref    = true;
@@ -233,23 +208,17 @@ PagerStatus p_read_page(Pager* p, uint32_t page_no, void** page_data)
 PagerStatus p_write_page(Pager* p, uint32_t page_no, void* page_data)
 {
   if (p == NULL)
-  {
     return PAGER_ERR_BAD_PAGER;
-  }
 
   if (page_no >= p->num_pages)
-  {
     return PAGER_ERR_INVALID_PAGE;
-  }
 
   Page* pg = cache_lookup(p, page_no);
   if (pg == NULL)
   {
     PagerStatus s = cache_load(p, &pg, page_no);
     if (s != PAGER_OK)
-    {
       return s;
-    }
   }
 
   pg->ref       = true;
@@ -263,27 +232,22 @@ PagerStatus p_write_page(Pager* p, uint32_t page_no, void* page_data)
 PagerStatus p_commit(Pager* p)
 {
   if (p == NULL)
-  {
     return PAGER_ERR_BAD_PAGER;
-  }
 
   for (int i = 0; i < p->num_cached; ++i)
   {
     if (p->cache[i]->dirty)
     {
       if (flush(p, p->cache[i]) != PAGE_SIZE)
-      {
         return PAGER_ERR_IO;
-      }
+
       p->cache[i]->dirty     = false;
       p->cache[i]->was_dirty = false;
     }
   }
 
   if (fsync(p->fd) == -1)
-  {
     return PAGER_ERR_IO;
-  }
 
   return PAGER_OK;
 }
