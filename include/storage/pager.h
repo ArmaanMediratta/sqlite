@@ -1,6 +1,7 @@
 #ifndef PAGER_H
 #define PAGER_H
 
+#include "journal.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -17,7 +18,7 @@ typedef enum
   PAGER_ERR_INVALID_PAGE
 } PagerStatus;
 
-typedef struct __attribute__((packed))
+typedef struct
 {
   uint32_t page_no;
   void* data;
@@ -26,13 +27,14 @@ typedef struct __attribute__((packed))
   bool was_dirty;
 } Page;
 
-typedef struct __attribute__((packed))
+typedef struct
 {
   int fd;                  //.db file desc
   uint32_t num_pages;      // num of pages on .db file
   Page* cache[CACHE_SIZE]; // cache arr (2nd change algo)
   uint16_t num_cached;
   uint32_t clock_hand;
+  Journal* j;
 } Pager;
 
 PagerStatus p_open(const char* filename, Pager** out);

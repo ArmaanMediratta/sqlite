@@ -7,16 +7,21 @@ set(COMPILE_OPTS -Wall -Wextra -Werror -Wshadow -Wcast-align)
 
 project(sqlite VERSION 1.0 LANGUAGES C)
 
-add_library(internals src/pager.c)
-target_include_directories(internals PUBLIC include)
-target_compile_options(internals PRIVATE ${COMPILE_OPTS})
+add_library(collections src/collections/vector.c)
+target_include_directories(collections PUBLIC include/collections)
+target_compile_options(collections PRIVATE ${COMPILE_OPTS})
+
+add_library(storage src/storage/pager.c)
+target_include_directories(storage PUBLIC include/storage)
+target_link_libraries(storage collections)
+target_compile_options(storage PRIVATE ${COMPILE_OPTS})
 
 add_executable(sqlite_toy sqlite.c)
-target_link_libraries(sqlite_toy internals)
+target_link_libraries(sqlite_toy storage)
 target_compile_options(sqlite_toy PRIVATE ${COMPILE_OPTS})
 
 add_executable(pager_tests tests/pager_test.c)
-target_link_libraries(pager_tests internals)
+target_link_libraries(pager_tests storage)
 target_compile_options(pager_tests PRIVATE ${COMPILE_OPTS})
 
 enable_testing()

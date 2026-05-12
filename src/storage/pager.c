@@ -1,10 +1,12 @@
 #include "pager.h"
+#include "vector.h"
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -17,6 +19,19 @@ static int flush(Pager* p, Page* page)
 {
   return pwrite(p->fd, page->data, PAGE_SIZE, page->page_no * PAGE_SIZE);
 }
+
+// static int j_close(Journal* j)
+// {
+//   for (uint32_t i; i < j->journal->size; ++i)
+//   {
+//     write(j->fd, , size_t nbyte)
+//   }
+
+//   v_close(j->journal);
+//   close(j->fd);
+//   free(j);
+//   return 0;
+// }
 
 static PagerStatus create_page(Page** page, uint32_t page_no)
 {
