@@ -20,10 +20,17 @@ add_executable(sqlite_toy sqlite.c)
 target_link_libraries(sqlite_toy storage)
 target_compile_options(sqlite_toy PRIVATE ${COMPILE_OPTS})
 
-add_executable(pager_tests tests/pager_test.c)
+
+
+add_executable(journal_tests tests/storage/journal_test.c) 
+target_link_libraries(journal_tests storage)
+target_compile_options(journal_tests PRIVATE ${COMPILE_OPTS})
+
+add_executable(pager_tests tests/storage/pager_test.c) 
 target_link_libraries(pager_tests storage)
 target_compile_options(pager_tests PRIVATE ${COMPILE_OPTS})
 
 enable_testing()
 
 add_test(NAME pager COMMAND pager_tests)
+add_test(NAME journal COMMAND journal_tests)

@@ -13,7 +13,7 @@
 
 int failures = 0;
 
-#define TEST_DB "test.db"
+#define TEST_DB "test"
 
 #define RUN_TEST(fn)                                                           \
   do                                                                           \

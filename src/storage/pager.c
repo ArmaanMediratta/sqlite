@@ -107,13 +107,14 @@ static PagerStatus cache_load(Pager* p, Page** page, uint32_t page_no)
   return PAGER_OK;
 }
 
-PagerStatus p_open(char* filename, Pager** out)
+PagerStatus p_open(const char* filename, Pager** out)
 {
   Pager* p = calloc(1, sizeof(Pager));
   if (p == NULL)
     return PAGER_ERR_NO_MEM;
 
-  snprintf(filename, sizeof(filename), "%s.db", filename);
+  char temp_file[256];
+  snprintf(temp_file, sizeof(temp_file), "%s.db", filename);
 
   int fd = open(filename, O_RDWR | O_CREAT, 0644);
   if (fd == -1)

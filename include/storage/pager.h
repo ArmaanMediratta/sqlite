@@ -35,7 +35,7 @@ typedef struct Pager
   Journal* j;
 } Pager;
 
-PagerStatus p_open(char* filename, Pager** out);
+PagerStatus p_open(const char* filename, Pager** out);
 PagerStatus p_close(Pager* p);
 
 PagerStatus p_alloc_page(Pager* p, uint32_t* page_no);
