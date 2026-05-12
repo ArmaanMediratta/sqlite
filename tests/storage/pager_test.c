@@ -43,9 +43,7 @@ int failures = 0;
 void cleanup(Pager* p)
 {
   if (p)
-  {
     p_close(p);
-  }
   remove(TEST_DB);
 }
 
@@ -64,12 +62,8 @@ void write_pages(Pager* p, uint32_t num_pages)
   memset(TEST_DATA, 'A', PAGE_SIZE);
 
   for (uint32_t i = 0; i < num_pages; ++i)
-  {
     if (i < p->num_pages)
-    {
       p_write_page(p, i, TEST_DATA);
-    }
-  }
 }
 
 uint32_t count_pages_on_disk()
@@ -207,9 +201,7 @@ void test_read_empty_page()
 
   char* clean_data = (char*)data;
   for (uint32_t i = 0; i < PAGE_SIZE; ++i)
-  {
     assert(clean_data[i] == 0);
-  }
 
   cleanup(p);
 }
@@ -230,9 +222,7 @@ void test_read_non_empty_page()
 
   char* clean_data = (char*)data;
   for (uint32_t i = 0; i < PAGE_SIZE; ++i)
-  {
     assert(clean_data[i] == 'A');
-  }
 
   cleanup(p);
 }
@@ -254,9 +244,7 @@ void test_read_from_disk()
 
   char* clean_data = (char*)data;
   for (uint32_t i = 0; i < PAGE_SIZE; ++i)
-  {
     assert(clean_data[i] == 'A');
-  }
 
   cleanup(p);
 }
@@ -276,9 +264,7 @@ void test_write_page()
 
     char* clean_data = (char*)p->cache[0]->data;
     for (uint32_t i = 0; i < PAGE_SIZE; ++i)
-    {
       assert(clean_data[i] == 0);
-    }
 
     cleanup(p);
   }
@@ -318,13 +304,11 @@ void test_evict_prefers_clean_over_dirty()
   assert(p_alloc_page(p, &page_no) == PAGER_OK);
 
   for (uint32_t i = 0; i < CACHE_SIZE; ++i)
-  {
     if (p->cache[i] && p->cache[i]->page_no == 0)
     {
       assert(p->cache[i]->dirty);
       break;
     }
-  }
 
   cleanup(p);
 }

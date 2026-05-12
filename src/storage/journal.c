@@ -61,8 +61,8 @@ JournalStatus j_open(Journal** out, const char* journal_filename)
   snprintf(j->filename, sizeof(j->filename), "%s%s", journal_filename,
            JOURNAL_TAG);
 
-  if ((j->fd = open(journal_filename, O_RDWR)) == -1)
-    j->fd = open(journal_filename, O_RDWR | O_CREAT, 0644);
+  if ((j->fd = open(j->filename, O_RDWR)) == -1)
+    j->fd = open(j->filename, O_RDWR | O_CREAT, 0644);
 
   if (flock(j->fd, LOCK_EX | LOCK_NB) == -1)
   {
@@ -82,7 +82,7 @@ JournalStatus j_close(Journal* j)
   flock(j->fd, LOCK_UN);
   close(j->fd);
   v_close(j->journal);
-  unlink(j->filename);
+  remove(j->filename);
   free(j);
   return JOURNAL_OK;
 }
@@ -141,7 +141,8 @@ JournalStatus j_commit(Journal* j)
 
   for (uint32_t i = 0; i < j->journal->size; ++i)
   {
-    if (j_write(j->fd, j->journal->entires[i], i + 1, JOURNAL_ENTRY_SIZE) == -1)
+    if (j_write(j->fd, j->journal->entries[i]->data, i + 1,
+                JOURNAL_ENTRY_SIZE) == -1)
       return JOURNAL_ERR_IO;
   }
 
@@ -179,6 +180,9 @@ JournalStatus j_rollback(Journal* j, Pager* p)
           return JOURNAL_ERR_IO;
       }
     }
+
+    if (fsync(j->fd) == -1)
+      return JOURNAL_ERR_IO;
   }
 
   return JOURNAL_OK;
