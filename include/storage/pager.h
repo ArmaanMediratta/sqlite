@@ -16,7 +16,7 @@ typedef enum
   PAGER_ERR_INVALID_PAGE
 } PagerStatus;
 
-typedef struct
+typedef struct Page
 {
   uint32_t page_no;
   void* data;
@@ -25,7 +25,7 @@ typedef struct
   bool was_dirty;
 } Page;
 
-typedef struct
+typedef struct Pager
 {
   int fd;                  //.db file desc
   uint32_t num_pages;      // num of pages on .db file
