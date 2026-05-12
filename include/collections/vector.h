@@ -17,7 +17,7 @@ typedef struct
 
 typedef struct
 {
-  Entry** entires;
+  Entry** entries;
   uint32_t capacity;
   uint32_t size;
 } Vector;
