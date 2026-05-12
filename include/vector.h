@@ -7,7 +7,7 @@ typedef enum
 {
   VECTOR_OK,
   VECTOR_ERR_NO_MEM,
-  VECOR_ERR_BAD_VECTOR,
+  VECTOR_ERR_BAD_VECTOR,
 } VectorStatus;
 
 typedef struct

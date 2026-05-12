@@ -24,6 +24,9 @@ VectorStatus v_open(Vector** out)
 
 VectorStatus v_close(Vector* v)
 {
+  if (v == NULL)
+    return VECTOR_ERR_BAD_VECTOR;
+
   for (uint32_t i = 0; i < v->size; ++i)
   {
     free(v->entires[i]->data);
@@ -36,6 +39,9 @@ VectorStatus v_close(Vector* v)
 
 VectorStatus v_add(Vector* v, Entry* e)
 {
+  if (v == NULL)
+    return VECTOR_ERR_BAD_VECTOR;
+
   if (v->capacity == v->size)
   {
     v->entires = realloc(v->entires, (v->capacity * 2) * (sizeof(Entry)));
