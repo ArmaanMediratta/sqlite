@@ -1,12 +1,10 @@
 #ifndef PAGER_H
 #define PAGER_H
 
+#include "constants.h"
 #include "journal.h"
 #include <stdbool.h>
 #include <stdint.h>
-
-#define PAGE_SIZE  ((uint16_t)4096)
-#define CACHE_SIZE ((uint16_t)64)
 
 typedef enum
 {

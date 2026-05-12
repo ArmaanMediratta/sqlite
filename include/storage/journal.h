@@ -1,7 +1,7 @@
 #ifndef JOURNAL_H
 #define JOURNAL_H
 
-#include "pager.h"
+#include "constants.h"
 #include "vector.h"
 
 typedef enum
