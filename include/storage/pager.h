@@ -13,7 +13,8 @@ typedef enum
   PAGER_ERR_NO_MEM,
   PAGER_ERR_CORRUPT,
   PAGER_ERR_BAD_PAGER,
-  PAGER_ERR_INVALID_PAGE
+  PAGER_ERR_INVALID_PAGE,
+  PAGER_ERR_EXTERNAL
 } PagerStatus;
 
 typedef struct Page
@@ -35,7 +36,7 @@ typedef struct Pager
   Journal* j;
 } Pager;
 
-PagerStatus p_open(const char* filename, Pager** out);
+PagerStatus p_open(Pager** out, const char* filename);
 PagerStatus p_close(Pager* p);
 
 PagerStatus p_alloc_page(Pager* p, uint32_t* page_no);

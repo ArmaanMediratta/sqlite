@@ -15,6 +15,7 @@
 
 int failures = 0;
 
+#define TEST_DB_NAME "test"
 #define TEST_DB      "test.db"
 #define TEST_JOURNAL "test.db-journal"
 
@@ -53,19 +54,21 @@ void cleanup(Journal* j, Pager* p)
   remove(TEST_DB);
 }
 
-void populate_db()
+void populate_db(uint32_t count)
 {
   Pager* p;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
-  for (uint32_t i = 0; i < 5; ++i)
+  for (uint32_t i = 0; i < count; ++i)
   {
     p_alloc_page(p, &i);
     char data[PAGE_SIZE];
     memset(data, 1, PAGE_SIZE);
     p_write_page(p, i, data);
   }
+
   p_commit(p);
+  p_close(p);
 }
 
 void add_entries(Journal* j, int count)
@@ -162,18 +165,13 @@ void test_incomplete_journal_lifecycle()
 
 void test_valid_journal_rollback()
 {
-  populate_db();
-
-  Pager* p;
-  p_open(TEST_DB, &p);
+  populate_db(5);
+  assert(count_database_entries() == 5);
 
   create_good_existing_journal(5);
 
-  Journal* j;
-  j_open(&j, TEST_DB);
-  j_rollback(j, p);
-
-  assert(count_database_entries() == 5);
+  Pager* p;
+  p_open(&p, TEST_DB_NAME);
 
   for (uint32_t i = 0; i < 5; ++i)
   {
@@ -185,21 +183,18 @@ void test_valid_journal_rollback()
       assert(cbuf[k] == 0);
   }
 
-  cleanup(j, p);
+  cleanup(NULL, p);
 }
 
 void test_invalid_journal_rollback()
 {
-  populate_db();
-
-  Pager* p;
-  p_open(TEST_DB, &p);
+  populate_db(5);
+  assert(count_database_entries() == 5);
 
   create_corrupt_existing_journal();
 
-  Journal* j;
-  j_open(&j, TEST_DB);
-  j_rollback(j, p);
+  Pager* p;
+  p_open(&p, TEST_DB_NAME);
 
   assert(count_database_entries() == 5);
 
@@ -213,7 +208,7 @@ void test_invalid_journal_rollback()
       assert(cbuf[k] == 1);
   }
 
-  cleanup(j, p);
+  cleanup(NULL, p);
 }
 
 int main()
