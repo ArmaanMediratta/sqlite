@@ -13,10 +13,11 @@ typedef enum
   PAGER_ERR_NO_MEM,
   PAGER_ERR_CORRUPT,
   PAGER_ERR_BAD_PAGER,
-  PAGER_ERR_INVALID_PAGE
+  PAGER_ERR_INVALID_PAGE,
+  PAGER_ERR_EXTERNAL
 } PagerStatus;
 
-typedef struct
+typedef struct Page
 {
   uint32_t page_no;
   void* data;
@@ -25,7 +26,7 @@ typedef struct
   bool was_dirty;
 } Page;
 
-typedef struct
+typedef struct Pager
 {
   int fd;                  //.db file desc
   uint32_t num_pages;      // num of pages on .db file
@@ -33,9 +34,10 @@ typedef struct
   uint16_t num_cached;
   uint32_t clock_hand;
   Journal* j;
+  bool is_writer;
 } Pager;
 
-PagerStatus p_open(char* filename, Pager** out);
+PagerStatus p_open(Pager** out, const char* filename);
 PagerStatus p_close(Pager* p);
 
 PagerStatus p_alloc_page(Pager* p, uint32_t* page_no);

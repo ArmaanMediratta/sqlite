@@ -13,7 +13,8 @@
 
 int failures = 0;
 
-#define TEST_DB "test.db"
+#define TEST_DB_NAME "test"
+#define TEST_DB      "test.db"
 
 #define RUN_TEST(fn)                                                           \
   do                                                                           \
@@ -43,10 +44,9 @@ int failures = 0;
 void cleanup(Pager* p)
 {
   if (p)
-  {
     p_close(p);
-  }
   remove(TEST_DB);
+  remove(TEST_DB_NAME);
 }
 
 void allocate_pages(Pager* p, uint32_t num_pages)
@@ -64,12 +64,8 @@ void write_pages(Pager* p, uint32_t num_pages)
   memset(TEST_DATA, 'A', PAGE_SIZE);
 
   for (uint32_t i = 0; i < num_pages; ++i)
-  {
     if (i < p->num_pages)
-    {
       p_write_page(p, i, TEST_DATA);
-    }
-  }
 }
 
 uint32_t count_pages_on_disk()
@@ -83,9 +79,10 @@ void test_open_close_empty_db()
 {
   Pager* p;
 
-  assert(p_open(TEST_DB, &p) == PAGER_OK);
+  assert(p_open(&p, TEST_DB_NAME) == PAGER_OK);
   assert(p != NULL);
   assert(p->num_pages == 0);
+  assert(p->j != NULL);
 
   cleanup(p);
 }
@@ -93,15 +90,16 @@ void test_open_close_empty_db()
 void test_open_close_non_empty_db()
 {
   Pager* p;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
   allocate_pages(p, 64);
   write_pages(p, 64);
   p_commit(p);
   p_close(p);
 
-  assert(p_open(TEST_DB, &p) == PAGER_OK);
+  assert(p_open(&p, TEST_DB_NAME) == PAGER_OK);
   assert(p != NULL);
   assert(p->num_pages == 64);
+  assert(p->j != NULL);
 
   cleanup(p);
 }
@@ -112,7 +110,7 @@ void test_corrupt_db()
   write(fd, "a", 1);
 
   Pager* p;
-  assert(p_open(TEST_DB, &p) == PAGER_ERR_CORRUPT);
+  assert(p_open(&p, TEST_DB_NAME) == PAGER_ERR_CORRUPT);
 
   cleanup(NULL);
   close(fd);
@@ -122,7 +120,7 @@ void test_allocate_page_empty_db()
 {
   Pager* p;
   uint32_t page_no;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   assert(p_alloc_page(p, &page_no) == PAGER_OK);
 
@@ -140,7 +138,7 @@ void test_allocate_page_partial_cache()
 {
   Pager* p;
   uint32_t num_alloc = 32;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   allocate_pages(p, num_alloc);
 
@@ -160,7 +158,7 @@ void test_allocate_page_full_cache()
 {
   Pager* p;
   uint32_t num_alloc = 64;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   allocate_pages(p, num_alloc);
 
@@ -185,7 +183,7 @@ void test_read_invalid_page()
 {
   Pager* p;
   void* data;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   assert(p_read_page(p, 100, &data) == PAGER_ERR_INVALID_PAGE);
 
@@ -196,7 +194,7 @@ void test_read_empty_page()
 {
   Pager* p;
   void* data;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   allocate_pages(p, 1);
 
@@ -207,9 +205,7 @@ void test_read_empty_page()
 
   char* clean_data = (char*)data;
   for (uint32_t i = 0; i < PAGE_SIZE; ++i)
-  {
     assert(clean_data[i] == 0);
-  }
 
   cleanup(p);
 }
@@ -218,7 +214,7 @@ void test_read_non_empty_page()
 {
   Pager* p;
   void* data;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   allocate_pages(p, 1);
   write_pages(p, 1);
@@ -230,9 +226,7 @@ void test_read_non_empty_page()
 
   char* clean_data = (char*)data;
   for (uint32_t i = 0; i < PAGE_SIZE; ++i)
-  {
     assert(clean_data[i] == 'A');
-  }
 
   cleanup(p);
 }
@@ -241,7 +235,7 @@ void test_read_from_disk()
 {
   Pager* p;
   void* data;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   allocate_pages(p, 1);
   write_pages(p, 1);
@@ -254,9 +248,7 @@ void test_read_from_disk()
 
   char* clean_data = (char*)data;
   for (uint32_t i = 0; i < PAGE_SIZE; ++i)
-  {
     assert(clean_data[i] == 'A');
-  }
 
   cleanup(p);
 }
@@ -266,7 +258,7 @@ void test_write_page()
   {
     Pager* p;
     void* data[4096];
-    p_open(TEST_DB, &p);
+    p_open(&p, TEST_DB_NAME);
     allocate_pages(p, 1);
 
     assert(p_write_page(p, 0, data) == PAGER_OK);
@@ -276,9 +268,7 @@ void test_write_page()
 
     char* clean_data = (char*)p->cache[0]->data;
     for (uint32_t i = 0; i < PAGE_SIZE; ++i)
-    {
       assert(clean_data[i] == 0);
-    }
 
     cleanup(p);
   }
@@ -287,7 +277,7 @@ void test_write_page()
 void test_evict_clean_page()
 {
   Pager* p;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   allocate_pages(p, 64);
 
@@ -306,7 +296,7 @@ void test_evict_clean_page()
 void test_evict_prefers_clean_over_dirty()
 {
   Pager* p;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   allocate_pages(p, 64);
 
@@ -318,13 +308,11 @@ void test_evict_prefers_clean_over_dirty()
   assert(p_alloc_page(p, &page_no) == PAGER_OK);
 
   for (uint32_t i = 0; i < CACHE_SIZE; ++i)
-  {
     if (p->cache[i] && p->cache[i]->page_no == 0)
     {
       assert(p->cache[i]->dirty);
       break;
     }
-  }
 
   cleanup(p);
 }
@@ -332,7 +320,7 @@ void test_evict_prefers_clean_over_dirty()
 void test_evict_dirty_page_flushed_to_disk()
 {
   Pager* p;
-  p_open(TEST_DB, &p);
+  p_open(&p, TEST_DB_NAME);
 
   allocate_pages(p, 64);
   write_pages(p, 64);

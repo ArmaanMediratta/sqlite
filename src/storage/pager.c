@@ -1,5 +1,5 @@
 #include "pager.h"
-#include "vector.h"
+#include "journal.h"
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -20,19 +20,6 @@ static int flush(Pager* p, Page* page)
 {
   return pwrite(p->fd, page->data, PAGE_SIZE, page->page_no * PAGE_SIZE);
 }
-
-// static int j_close(Journal* j)
-// {
-//   for (uint32_t i; i < j->journal->size; ++i)
-//   {
-//     write(j->fd, , size_t nbyte)
-//   }
-
-//   v_close(j->journal);
-//   close(j->fd);
-//   free(j);
-//   return 0;
-// }
 
 static PagerStatus create_page(Page** page, uint32_t page_no)
 {
@@ -121,17 +108,27 @@ static PagerStatus cache_load(Pager* p, Page** page, uint32_t page_no)
   return PAGER_OK;
 }
 
-PagerStatus p_open(char* filename, Pager** out)
+PagerStatus p_open(Pager** out, const char* filename)
 {
+  char temp_file[256];
+  snprintf(temp_file, sizeof(temp_file), "%s.db", filename);
+
   Pager* p = calloc(1, sizeof(Pager));
   if (p == NULL)
     return PAGER_ERR_NO_MEM;
 
-  snprintf(filename, sizeof(filename), "%s.db", filename);
+  Journal* j;
+  if (j_open(&j, temp_file) != JOURNAL_OK)
+  {
+    free(p);
+    return PAGER_ERR_EXTERNAL;
+  }
+  p->j = j;
 
-  int fd = open(filename, O_RDWR | O_CREAT, 0644);
+  int fd = open(temp_file, O_RDWR | O_CREAT, 0644);
   if (fd == -1)
   {
+    j_close(j);
     free(p);
     return PAGER_ERR_IO;
   }
@@ -140,6 +137,7 @@ PagerStatus p_open(char* filename, Pager** out)
   struct stat st;
   if (fstat(fd, &st) == -1)
   {
+    j_close(j);
     close(fd);
     free(p);
     return PAGER_ERR_IO;
@@ -147,6 +145,7 @@ PagerStatus p_open(char* filename, Pager** out)
 
   if (st.st_size % PAGE_SIZE != 0)
   {
+    j_close(j);
     close(fd);
     free(p);
     return PAGER_ERR_CORRUPT;
@@ -156,6 +155,14 @@ PagerStatus p_open(char* filename, Pager** out)
     p->num_pages = (st.st_size / PAGE_SIZE);
   else
     p->num_pages = 0;
+
+  if (j_rollback(j, p) != JOURNAL_OK)
+  {
+    j_close(j);
+    close(fd);
+    free(p);
+    return PAGER_ERR_EXTERNAL;
+  }
 
   *out = p;
 
@@ -172,6 +179,8 @@ PagerStatus p_close(Pager* p)
     free(p->cache[i]->data);
     free(p->cache[i]);
   }
+
+  j_close(p->j);
 
   free(p);
   return PAGER_OK;
@@ -231,6 +240,16 @@ PagerStatus p_write_page(Pager* p, uint32_t page_no, void* page_data)
   if (page_no >= p->num_pages)
     return PAGER_ERR_INVALID_PAGE;
 
+  if (!p->is_writer)
+  {
+    p->is_writer = true;
+    if (j_create(p->j) != JOURNAL_OK)
+      return PAGER_ERR_EXTERNAL;
+  }
+
+  if (j_add_entry(p->j, page_no, page_data) != JOURNAL_OK)
+    return PAGER_ERR_EXTERNAL;
+
   Page* pg = cache_lookup(p, page_no);
   if (pg == NULL)
   {
@@ -251,6 +270,9 @@ PagerStatus p_commit(Pager* p)
 {
   if (p == NULL)
     return PAGER_ERR_BAD_PAGER;
+
+  if (j_commit(p->j) != JOURNAL_OK)
+    return PAGER_ERR_EXTERNAL;
 
   for (int i = 0; i < p->num_cached; ++i)
   {
