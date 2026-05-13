@@ -156,7 +156,7 @@ PagerStatus p_open(Pager** out, const char* filename)
   else
     p->num_pages = 0;
 
-  if (j_rollback(j, p) != JOURNAL_OK || j_create(j) != JOURNAL_OK)
+  if (j_rollback(j, p) != JOURNAL_OK)
   {
     j_close(j);
     close(fd);
@@ -239,6 +239,13 @@ PagerStatus p_write_page(Pager* p, uint32_t page_no, void* page_data)
 
   if (page_no >= p->num_pages)
     return PAGER_ERR_INVALID_PAGE;
+
+  if (!p->is_writer)
+  {
+    p->is_writer = true;
+    if (j_create(p->j) != JOURNAL_OK)
+      return PAGER_ERR_EXTERNAL;
+  }
 
   if (j_add_entry(p->j, page_no, page_data) != JOURNAL_OK)
     return PAGER_ERR_EXTERNAL;

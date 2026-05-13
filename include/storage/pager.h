@@ -34,6 +34,7 @@ typedef struct Pager
   uint16_t num_cached;
   uint32_t clock_hand;
   Journal* j;
+  bool is_writer;
 } Pager;
 
 PagerStatus p_open(Pager** out, const char* filename);

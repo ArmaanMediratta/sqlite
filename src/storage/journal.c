@@ -92,6 +92,9 @@ JournalStatus j_create(Journal* j)
   if (j == NULL)
     return JOURNAL_ERR_BAD_JOURNAL;
 
+  if (flock(j->fd, LOCK_EX | LOCK_NB) == -1)
+    return JOURNAL_ERR_IO;
+
   if (ftruncate(j->fd, 0) == -1)
     return JOURNAL_ERR_IO;
 
@@ -184,6 +187,9 @@ JournalStatus j_rollback(Journal* j, Pager* p)
     if (fsync(j->fd) == -1)
       return JOURNAL_ERR_IO;
   }
+
+  if (flock(j->fd, LOCK_UN) == -1)
+    return JOURNAL_ERR_IO;
 
   return JOURNAL_OK;
 }
